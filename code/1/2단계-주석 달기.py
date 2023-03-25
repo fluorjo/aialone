@@ -32,7 +32,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #트레인/테스트 데이터셋 설정. 트랜스폼은 totensor
 train_dataset=MNIST(root='./mnist', train=True, transform=ToTensor(), download=True)
-test_dataset=MNIST(root='./mnist', train=True, transform=ToTensor(), download=True)
+test_dataset=MNIST(root='./mnist', train=False, transform=ToTensor(), download=True)
 
 #트레인/테스트 데이터로더 설정. 셔플하기.
 train_loader=DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=True)
