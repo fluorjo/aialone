@@ -1,0 +1,51 @@
+{
+    // IntelliSense를 사용하여 가능한 특성에 대해 알아보세요.
+    // 기존 특성에 대한 설명을 보려면 가리킵니다.
+    // 자세한 내용을 보려면 https://go.microsoft.com/fwlink/?linkid=830387을(를) 방문하세요.
+    "version": "0.2.0",
+    "configurations": [
+        {"name":"Python: 현재 파일","type":"python","request":"launch","program":"${file}","console":"integratedTerminal","justMyCode":true},
+        {
+            "name": "Python: test",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "myLeNet",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}${pathSeparator}code${pathSeparator}2${pathSeparator}LeNet5.py", 
+            //터미널을 뭘 쓸건지. vs코드 내부 거 쓸 건지 외부 터미널 쓸 건지.
+            "console": "integratedTerminal",
+            //내 코드 안에서 에러가 났을 때 어떻게 처리할지.
+            "justMyCode": false,
+            //현재 작업 폴더
+            "cwd": "${workspaceFolder}",
+            //gpu 중 어떤 걸 (강제적으로)실행시킬 건지. 없으면 알아서 무시함.
+            "env": {"CUDA_VISIBLE_DEVICES":"0"}, 
+             "args": [
+
+            ]
+            },
+        {
+            "name": "LeNet_Cifar",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}${pathSeparator}code${pathSeparator}2${pathSeparator}LeNet5.py", 
+            //터미널을 뭘 쓸건지. vs코드 내부 거 쓸 건지 외부 터미널 쓸 건지.
+            "console": "integratedTerminal",
+            //내 코드 안에서 에러가 났을 때 어떻게 처리할지.
+            "justMyCode": false,
+            //현재 작업 폴더
+            "cwd": "${workspaceFolder}",
+            //gpu 중 어떤 걸 (강제적으로)실행시킬 건지. 없으면 알아서 무시함.
+            "env": {"CUDA_VISIBLE_DEVICES":"0"}, 
+             "args": [
+
+            ]
+            },
+    ]
+}
