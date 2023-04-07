@@ -187,22 +187,27 @@ class myLeNet_linear(nn.Module):
 class myLeNet_convs(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        self.conv1=nn.Conv2d(in_channels=1,out_channels=6,kernel_size=5)
+        self.tmp_conv1=nn.ModuleList([
+            nn.Conv2d(3,6,3,1,1)] + [nn.Conv2d(6,6,3,1,1) for _ in range(3-1)
+        ])
+        self.conv1=nn.Conv2d(in_channels=6,out_channels=6,kernel_size=5)
         self.bn1=nn.BatchNorm2d(num_features=6)
         self.act1=nn.ReLU()
-        self.pool1= nn.MaxPool2d(kernel_size=2)
-
-        self.conv2=nn.Conv2d(in_channels=1,out_channels=6,kernel_size=5)
-        self.bn2=nn.BatchNorm2d(num_features=6)
-        self.act2=nn.ReLU()
-        self.pool2= nn.MaxPool2d(kernel_size=2)
+        self.pool1=nn.MaxPool2d(kernel_size=2)
         
+        self.conv2=nn.Conv2d(in_channels=6,out_channels=6,kernel_size=5)
+        self.bn2=nn.BatchNorm2d(num_features=16)
+        self.act2=nn.ReLU()
+        self.pool2=nn.MaxPool2d(kernel_size=2)
+
         self.fc1=nn.Linear(in_features=16*5*5,out_features=120)
         self.fc2=nn.Linear(in_features=120,out_features=84)
         self.fc3=nn.Linear(in_features=84,out_features=num_classes)
         
     def forward(self,x):
-        b,_,_,_=x.shape
+        b,c,h,w=x.shape
+        for module in self.tmp_conv1:
+            x=module(x)
         x=self.conv1(x)
         x=self.bn1(x)
         x=self.act1(x)
@@ -219,16 +224,20 @@ class myLeNet_convs(nn.Module):
         x=self.fc3(x)
         return x
 #------------------Lenet_incep-----------------------#
-class myLeNet(nn.Module):
+class myLeNet_incep(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        self.conv1=nn.Conv2d(in_channels=1,out_channels=6,kernel_size=5)
+        self.conv1_1=nn.Conv2d(3,6,5,1,2)
+        self.conv1_2=nn.Conv2d(3,6,3,1,1)
+        self.conv1_3=nn.Conv2d(3,6,1,1,0)
+        
+        self.conv1=nn.Conv2d(in_channels=18,out_channels=6,kernel_size=5)
         self.bn1=nn.BatchNorm2d(num_features=6)
         self.act1=nn.ReLU()
         self.pool1= nn.MaxPool2d(kernel_size=2)
 
-        self.conv2=nn.Conv2d(in_channels=1,out_channels=6,kernel_size=5)
-        self.bn2=nn.BatchNorm2d(num_features=6)
+        self.conv2=nn.Conv2d(in_channels=6,out_channels=16,kernel_size=5)
+        self.bn2=nn.BatchNorm2d(num_features=16)
         self.act2=nn.ReLU()
         self.pool2= nn.MaxPool2d(kernel_size=2)
         
@@ -237,8 +246,15 @@ class myLeNet(nn.Module):
         self.fc3=nn.Linear(in_features=84,out_features=num_classes)
         
     def forward(self,x):
-        b,_,_,_=x.shape
-        x=self.conv1(x)
+        b,c,h,w=x.shape
+
+        x_1=self.conv1_1(x)
+        x_2=self.conv1_2(x)
+        x_3=self.conv1_3(x)
+        
+        x_cat=torch.cat((x_1,x_2,x_3),dim=1)
+        
+        x=self.conv1(x_cat)
         x=self.bn1(x)
         x=self.act1(x)
         x=self.pool1(x)
@@ -253,3 +269,42 @@ class myLeNet(nn.Module):
         x=self.fc2(x)
         x=self.fc3(x)
         return x
+    
+#모델
+
+#model=myMLP(hidden_size,num_classes).to(device)
+#model=myLeNet
+#model=myLeNet_seq
+#model=myLeNet_linear
+#model=myLeNet_convs
+model=myLeNet_incep(num_classes).to(device)
+
+#loss
+loss=nn.CrossEntropyLoss()
+optim=Adam(model.parameters(),lr=lr)
+
+def eval_class(model,loader):
+    total=torch.zeros(num_classes)
+    correct=torch.zeros(num_classes)
+    
+    for idx,(image,target) in enumerate(loader):
+        image=image.to(device)
+        target=target.to(device)
+        
+        out=model(image)
+        _,pred=torch.max(out,1)
+        
+        for i in range(num_classes):
+            correct[i]+=((target==i)&(pred==i)).sum().item()
+            total[i]+=(target==i).sum().item()
+    return correct,total
+
+for epoch in range(epochs):
+    for idx, (image, target) in enumerate(train_loader):
+        image=image.to(device)
+        target=target.to(device)
+        
+        out=model(image)
+        loss_value=loss(out, target)
+        optim.zero_grad()
+        loss_value.backward()
