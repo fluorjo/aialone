@@ -282,6 +282,19 @@ model=myLeNet_incep(num_classes).to(device)
 #loss
 loss=nn.CrossEntropyLoss()
 optim=Adam(model.parameters(),lr=lr)
+def eval(model, loader):
+    total = 0 
+    correct = 0 
+    for idx, (image, target) in enumerate(loader):
+        image = image.to(device)
+        target = target.to(device)
+
+        out = model(image)
+        _, pred = torch.max(out, 1)
+
+        correct += (pred == target).sum().item()
+        total += image.shape[0]
+    return correct / total 
 
 def eval_class(model,loader):
     total=torch.zeros(num_classes)
@@ -308,3 +321,8 @@ for epoch in range(epochs):
         loss_value=loss(out, target)
         optim.zero_grad()
         loss_value.backward()
+        optim.step()
+
+        if idx %100 ==0:
+          print(loss_value.item())
+          print('accuracy : ', eval(model, test_loader))
