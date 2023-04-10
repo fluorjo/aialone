@@ -48,10 +48,10 @@
             ]
             },
             {
-            "name": "LeNet523",
+            "name": "3week train.py",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}${pathSeparator}code${pathSeparator}2${pathSeparator}523step.py", 
+            "program": "${workspaceFolder}${pathSeparator}code${pathSeparator}3${pathSeparator}train.py", 
             //터미널을 뭘 쓸건지. vs코드 내부 거 쓸 건지 외부 터미널 쓸 건지.
             "console": "integratedTerminal",
             //내 코드 안에서 에러가 났을 때 어떻게 처리할지.
@@ -61,6 +61,13 @@
             //gpu 중 어떤 걸 (강제적으로)실행시킬 건지. 없으면 알아서 무시함.
             "env": {"CUDA_VISIBLE_DEVICES":"0"}, 
              "args": [
+                "--batch_size","150",
+                "--hidden_size","150",
+                "--num_classes","10",
+                "--lr","0.03",
+                "--epochs","10",
+                "--device","cpu",
+                "--img_size","32",
 
             ]
             },
