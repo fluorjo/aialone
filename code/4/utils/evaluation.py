@@ -1,4 +1,3 @@
-#평가
 import torch
 
 def eval(model, loader, args):
