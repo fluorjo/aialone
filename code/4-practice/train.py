@@ -15,15 +15,16 @@ def main():
     args = parser_args() 
     
     #저장 폴더 설정. 
-    save_folder_path = get_save_folder_path(args)
-    
+    save_folder_path=get_save_folder_path(args)
     os.makedirs(save_folder_path)
-    with open(os.path.join(save_folder_path,'args.json'),'w') as f:
-        json_args=args.__dict__.copy()
+    with open(os.path.join(save_folder_path,'args.json'),'w') as f: 
+        json_args=args.__dict__.copy() 
         del json_args['device']
         json.dump(json_args,f,indent=4)
         
     train_loader, test_loader=getDataLoader(args)
+    
+    
 
     # 모델, loss, optimizer 
     model=getTargetModel(args)
