@@ -31,6 +31,6 @@ def get_save_folder_path(args):
     else:
         current_max_value=max([int(f) for f in os.listdir(args.save_folder)])
         new_folder_name=str(current_max_value+1)
-
+#path.join= 경로를 붙인다. (args.save_folder='result'와 뒤에 붙을 숫자를)
     path=os.path.join(args.save_folder,new_folder_name)
     return path

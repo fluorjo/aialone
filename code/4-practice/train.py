@@ -16,6 +16,7 @@ def main():
     
     #저장 폴더 설정. 
     save_folder_path=get_save_folder_path(args)
+    
     os.makedirs(save_folder_path)
     with open(os.path.join(save_folder_path,'args.json'),'w') as f: 
         json_args=args.__dict__.copy() 

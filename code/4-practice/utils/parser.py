@@ -11,6 +11,12 @@ def parser_args():
     parser.add_argument("--device", default=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
     parser.add_argument("--img_size", type=int, default=32)
     
+    parser.add_argument("--model_type", type=str, default='lenet',choices=['mlp','lenet','linear','conv','incep'])
+    parser.add_argument("--save_folder", type=str, default='results')
+    
+    return parser.parse_args()
+    
+    
 def infer_parser_args(): 
     parser = argparse.ArgumentParser() 
     
@@ -20,7 +26,7 @@ def infer_parser_args():
     return parser.parse_args()
 def load_trained_args(args):
     import json 
-    with open(os.path.join(argsloder,'args.json'), 'r') as 
+    # with open(os.path.join(argsloder,'args.json'), 'r') as 
     return load_trained_args
 
 # ** = 언패킹?
