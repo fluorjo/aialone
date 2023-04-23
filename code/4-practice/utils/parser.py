@@ -1,5 +1,8 @@
+import json 
 import torch
 import argparse
+import os
+import 
 def parser_args(): 
     parser = argparse.ArgumentParser() 
     
@@ -25,8 +28,10 @@ def infer_parser_args():
     parser.add_argument("--device", default=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
     return parser.parse_args()
 def load_trained_args(args):
-    import json 
-    # with open(os.path.join(argsloder,'args.json'), 'r') as 
-    return load_trained_args
+    with open(os.path.join(args.folder,'args.json'), 'r') as f:
+        trained_args=json.load(f)
+    trained_args['device']=args.device
+    trained_args=argparse.Namespace(**trained_args)
+    return trained_args
 
 # ** = 언패킹?
