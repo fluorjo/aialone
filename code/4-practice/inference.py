@@ -1,6 +1,8 @@
 #학습 종료 후 모델 불러와서 새 데이터 입력 후 추론 결과를 도출하는 것. 
-
+from utils.getModules import getTransform
+from utils.getModules import getTargetModel
 from utils.parser import infer_parser_args
+from utils.parser import load_trained_args
 import torch
 import os
 
@@ -25,16 +27,21 @@ def main():
     transform = getTransform(trained_args)
     
     #이미지 불러오기
-    img=Image.open(args,image)
+    img=Image.open(args.image)
+    #모델에 넣기 위해 transform
     img=transform(img)
+    #배치를 넣어줘야 함. 차원 낮춰줘야 함. 배치 1로 만듦.
     img=img.unsqueeze(0)
     
     #모델 출력'
     output=model(img)
-    
+    #스코어를 확률로.
     prob=F.softmax(output, dim=1)
     index=torch.argmax(prob)
     value=torch.max(prob)
+    
+    classes = ['airplanes', 'cars', 'birds', 'cats', 'deer', 'dogs', 'frogs', 'horses', 'ships', 'trucks']
+    print(f'Image is {classes[index]}, and the confidence is {value*100:.2f} %')
     
     
     print(output)
