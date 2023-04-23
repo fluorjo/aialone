@@ -9,6 +9,16 @@ import sys
 import os
 sys.path.append(os.getcwd())
 
+def getTransform(args):
+    mean=CIFAR_MEAN
+    std=CIFAR_STD
+    
+    transform=Compose([
+        Resize((args.img_size,args.img_size)),
+        ToTensor(),
+        Normalize(mean,std)
+    ])
+    return transform
 
 def getDataLoader(args):
     mean=CIFAR_MEAN
