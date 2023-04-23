@@ -25,6 +25,7 @@ def draw_from_dataset(dataset, std, mean,):
     cv2.imshow(label,img),
 
 def get_save_folder_path(args):
+    #맨 처음에는 저장 폴더가 없을 것이므로 만들어 준다.
     if not os.path.exists(args.save_folder):
         os.makedirs(args.save_folder)
         new_folder_name='1'

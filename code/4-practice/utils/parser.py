@@ -12,7 +12,7 @@ def parser_args():
     parser.add_argument("--img_size", type=int, default=32)
     
     parser.add_argument("--model_type", type=str, default='lenet',choices=['mlp','lenet','linear','conv','incep'])
-    parser.add_argument("--save_folder", type=str, default='results')
+    parser.add_argument("--save_folder", type=str, default='code/4-practice/results')
     
     return parser.parse_args()
     

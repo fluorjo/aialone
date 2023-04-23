@@ -1,3 +1,5 @@
+#학습 종료 후 모델 불러와서 새 데이터 입력 후 추론 결과를 도출하는 것. 
+
 from utils.parser import infer_parser_args
 import torch
 import os
