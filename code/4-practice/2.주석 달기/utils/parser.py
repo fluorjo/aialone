@@ -17,8 +17,7 @@ def parser_args():
     parser.add_argument("--save_folder", type=str, default='code/4-practice/results')
     
     return parser.parse_args()
-    
-    
+#parser에 argument 추가. 폴더, 이미지, 디바이스.
 def infer_parser_args(): 
     parser = argparse.ArgumentParser() 
     
@@ -26,13 +25,14 @@ def infer_parser_args():
     parser.add_argument("--image", type=str)
     parser.add_argument("--device", default=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
     return parser.parse_args()
+#학습된 arg 불러오기.
 def load_trained_args(args):
+    #args가 저장된 폴더에서 args.json 불러오기.
     with open(os.path.join(args.folder,'args.json'), 'r') as f:
         trained_args=json.load(f)
+    #디바이스 설정.
     trained_args['device']=args.device
     #namespace=특정 객체를 이름에 따라 구분할 수 있는 범위(?)
     # ** =딕셔너리의 value 값을 넣는다?
     trained_args=argparse.Namespace(**trained_args)
     return trained_args
-
-# ** = 언패킹?

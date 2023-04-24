@@ -13,6 +13,7 @@ def main():
     pass
     #추론 전용 파서 불러오기
     args=infer_parser_args()
+    #assert로 폴더와 이미 없을 시 경고문 출력
     assert os.path.exists(args.folder),"학습 폴더 없음."
     assert os.path.exists(args.image),"추론할 이미지 없음."
     #학습이 된 폴더 기반으로 학습된 args 불러오기
