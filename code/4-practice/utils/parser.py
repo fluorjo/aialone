@@ -2,7 +2,6 @@ import json
 import torch
 import argparse
 import os
-import 
 def parser_args(): 
     parser = argparse.ArgumentParser() 
     
@@ -26,6 +25,7 @@ def infer_parser_args():
     parser.add_argument("--folder", type=str)
     parser.add_argument("--image", type=str)
     parser.add_argument("--device", default=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    
     return parser.parse_args()
 def load_trained_args(args):
     with open(os.path.join(args.folder,'args.json'), 'r') as f:
