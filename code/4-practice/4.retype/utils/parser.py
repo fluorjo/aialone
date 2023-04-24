@@ -23,6 +23,9 @@ def infer_parser_args():
     parser.add_argument("--folder",type=str)
     parser.add_argument("--image",type=str)
     parser.add_argument("--device",default=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    #resume 추가. 
+    #store_true= 어쨌든 arg가 있기만 하면 true 반환한다?
+    parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
     return parser.parse_args()
 
 #학습된 arg 불러오기.

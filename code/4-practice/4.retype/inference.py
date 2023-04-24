@@ -20,6 +20,7 @@ def main():
     #모델을 학습된 상황에 맞게 재설정
     model=getTargetModel(trained_args)
     #모델 가중치 업데이트
+
     model.load_state_dict(torch.load(os.path.join(args.folder,'best_model.ckpt')))
     #데이터 전처리 코드준비.
     transform=getTransform(trained_args)

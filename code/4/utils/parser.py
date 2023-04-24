@@ -1,5 +1,6 @@
 import torch
 import argparse
+import os
 def parser_args(): 
     parser = argparse.ArgumentParser() 
     
@@ -10,7 +11,6 @@ def parser_args():
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--device", default=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
     parser.add_argument("--img_size", type=int, default=32)
-
     
 def infer_parser_args(): 
     parser = argparse.ArgumentParser() 
@@ -21,7 +21,8 @@ def infer_parser_args():
     return parser.parse_args()
 def load_trained_args(args):
     import json 
-    with open(os.path.join(argsloder,'args.json'), 'r') as 
+    with open(os.path.join(argsloder,'args.json'), 'r') as f:
+        trained_args = json.load(f)
     return load_trained_args
 
 # ** = 언패킹?

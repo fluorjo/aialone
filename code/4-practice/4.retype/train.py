@@ -32,6 +32,17 @@ def main():
     # 학습 loop 
     #앞으로 정확도가 높아질수록 갱신이 될테니 우선 0으로 둔다. 
     best_acc=0
+    #epoch - 0에서 시작 혹은 마지막 체크포인트 epoch에서 시작.
+
+    if args.resume:
+        # Load checkpoint.
+        print('Resuming from checkpoint..')
+        assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+        checkpoint = torch.load('./checkpoint/ckpt.pth')
+        model.load_state_dict(checkpoint['net'])
+        best_acc = checkpoint['acc']
+        args.epochs = checkpoint['epoch']
+        
     for epoch in range(args.epochs):
         for idx, (image, target) in enumerate(train_loader):
             image=image.to(args.device)
@@ -47,6 +58,14 @@ def main():
                 print('accuracy=', acc)
                 #최고 정확도 갱신 시 모델 저장.
                 if best_acc < acc:
+                    state={
+                        'model':model.state_dict(),
+                        'acc':acc,
+                        'epoch':epoch,
+                    },
+                    if not os.path.isdir('checkpoint'):
+                        os.mkdir('checkpoin')
+                    torch.save(state,'./checkpoint/ckpt.pth')
                     best_acc=acc
                     #학습시 각 레이어마다 텐서로 매핑되는 매개변수를 dict 형태로 저장.
                     #dict로 저장하는 이유? key-value형태가 돼야 해서? 나중에 불러올 때도 그렇게 불러오게 됨.
