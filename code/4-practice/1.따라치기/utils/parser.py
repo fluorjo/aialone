@@ -31,9 +31,5 @@ def load_trained_args(args):
     with open(os.path.join(args.folder,'args.json'), 'r') as f:
         trained_args=json.load(f)
     trained_args['device']=args.device
-    #namespace=특정 객체를 이름에 따라 구분할 수 있는 범위(?)
-    # ** =딕셔너리의 value 값을 넣는다?
     trained_args=argparse.Namespace(**trained_args)
     return trained_args
-
-# ** = 언패킹?
