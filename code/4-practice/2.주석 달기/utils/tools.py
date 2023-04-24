@@ -23,7 +23,7 @@ def draw_from_dataset(dataset, std, mean,):
     )
     label = labels[label]
     cv2.imshow(label,img),
-
+#저장 폴더 생성 or 새 학습 결과 생성 시 1 더해가며 폴더 생성 
 def get_save_folder_path(args):
     if not os.path.exists(args.save_folder):
         os.makedirs(args.save_folder)

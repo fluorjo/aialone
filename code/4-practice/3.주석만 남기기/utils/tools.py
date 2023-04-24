@@ -23,14 +23,4 @@ def draw_from_dataset(dataset, std, mean,):
     )
     label = labels[label]
     cv2.imshow(label,img),
-
-def get_save_folder_path(args):
-    if not os.path.exists(args.save_folder):
-        os.makedirs(args.save_folder)
-        new_folder_name='1'
-    else:
-        current_max_value=max([int(f) for f in os.listdir(args.save_folder)])
-        new_folder_name=str(current_max_value+1)
-
-    path=os.path.join(args.save_folder,new_folder_name)
-    return path
+#저장 폴더 생성 or 새 학습 결과 생성 시 1 더해가며 폴더 생성 
