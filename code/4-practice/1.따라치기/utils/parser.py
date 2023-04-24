@@ -2,7 +2,6 @@ import json
 import torch
 import argparse
 import os
-import 
 def parser_args(): 
     parser = argparse.ArgumentParser() 
     
