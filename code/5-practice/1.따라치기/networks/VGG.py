@@ -60,3 +60,39 @@ class VGG_A(nn.Module):
         self.VGG_Block3=VGG_Block(128,256,2)
         self.VGG_Block4=VGG_Block(256,512,2)
         self.VGG_Block5=VGG_Block(512,512,2)
+        self.FC=VGG_classifier(num_classes)
+    
+    def forward(self,x):
+        b,c,w,h=x.shape
+        x=self.VGG_Block1(x)
+        x=self.VGG_Block2(x)
+        x=self.VGG_Block3(x)
+        x=self.VGG_Block4(x)
+        x=self.VGG_Block5(x)
+        x=x.reshape(b,-1)
+        x=self.FC(x)
+        return x
+    
+class VGG_B(VGG_A):
+    def __init__(self, num_classes):
+        super().__init__(num_classes)
+        self.VGG_Block1=VGG_Block(3,64,2)
+        self.VGG_Block2=VGG_Block(64,128,2)
+class VGG_C(VGG_B):
+    def __init__(self, num_classes):
+        super().__init__(num_classes)
+        self.VGG_Block3=VGG_Block(128,256,3,last_1conv=True)
+        self.VGG_Block4=VGG_Block(256,512,3,last_1conv=True)
+        self.VGG_Block5=VGG_Block(512,512,3,last_1conv=True)
+class VGG_D(VGG_B):
+    def __init__(self, num_classes):
+        super().__init__(num_classes)
+        self.VGG_Block3=VGG_Block(128,256,3)
+        self.VGG_Block4=VGG_Block(256,512,3)
+        self.VGG_Block5=VGG_Block(512,512,3)
+class VGG_E(VGG_D):
+    def __init__(self, num_classes):
+        super().__init__(num_classes)        
+        self.VGG_Block3=VGG_Block(128,256,4)
+        self.VGG_Block4=VGG_Block(256,512,4)
+        self.VGG_Block5=VGG_Block(512,512,4)
