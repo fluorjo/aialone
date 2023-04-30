@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn 
 
 class ResNet_front(nn.Module):
-    def __int__(self): 
+    def __init__(self): 
         super().__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(3, 64, 7, 2, 3),
@@ -17,7 +17,7 @@ class ResNet_front(nn.Module):
         return x 
     
 class ResNet_back(nn.Module):
-    def __int__(self, num_classes=10, config='18'): 
+    def __init__(self, num_classes=10, config='18'): 
         super().__init__()
         self.pool = nn.AdaptiveAvgPool2d(1)
         in_feat = 512 if config in ['18', '34'] else 2048
@@ -29,7 +29,7 @@ class ResNet_back(nn.Module):
         return x 
     
 class ResNet_Block(nn.Module):
-    def __int__(self, in_channel, out_channel, downsampling=False): 
+    def __init__(self, in_channel, out_channel, downsampling=False): 
         super().__init__()
         self.downsampling = downsampling 
         stride = 1
@@ -67,7 +67,7 @@ class ResNet_Block(nn.Module):
         return x 
     
 class ResNet_middel(nn.Module):
-    def __int__(self): 
+    def __init__(self): 
         super().__init__()
         # 입력 숫자, 출력 숫자, block 갯수 
         self.layer1 = self.make_layer(64, 64, 2)
@@ -89,7 +89,7 @@ class ResNet_middel(nn.Module):
         return x 
     
 class ResNet(nn.Module):
-    def __int__(self): 
+    def __init__(self): 
         super().__init__() 
         self.front = ResNet_front()
         self.middle = ResNet_middel()
