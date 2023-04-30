@@ -3,20 +3,17 @@ import torch.nn as nn
 class VGG_conv(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3):
         super().__init__()
-        #padding은 1, 대신 kernel size가 3이면 padding=0
+        #vgg는 conv 거칠 때 이미지 크기가 같아야 함. 
+        #kernel size가 3이면 padding은 1, kernel size가 3 아니고 1이면 padding=0. 이러면 크기 유지됨.
         padding=1 if kernel_size==3 else 0
-        #conv
         self.conv=nn.Conv2d(
-            #in/out channel, kernel size, stride(1),padding
             in_channels=in_channels, 
             out_channels=out_channels, 
             kernel_size=kernel_size, 
             stride=1,
             padding=padding
             )
-        #batchnorm
         self.bn=nn.BatchNorm2d(out_channels)
-        #relu
         self.relu=nn.ReLU()
         
     def forward(self,x):
@@ -29,9 +26,11 @@ class VGG_Block(nn.Module):
     def __init__(self,in_channel, output_channel,num_convs, last_1conv=False):
         super().__init__()
         self.first_conv=VGG_conv(in_channel,output_channel)
+        #처음과 마지막 아닌 conv들을 생성. 그래서 block의 전체 conv 수 -2 만큼 생성. 
         self.middle_convs=nn.ModuleList([
             VGG_conv(output_channel, output_channel) for _ in range(num_convs-2)
         ])
+        #마지막 conv면 kernel size가 1, 아닐 경우 3.
         kernel_size=1 if last_1conv else 3
         self.last_convs=VGG_conv(output_channel, output_channel, kernel_size=kernel_size)
         
@@ -59,7 +58,7 @@ class VGG_classifier(nn.Module):
     
 class VGG_A(nn.Module):
     def __init__(self, num_classes):
-        super().__ini__()
+        super().__init__()
         self.VGG_Block1=VGG_Block(3,64,1)
         self.VGG_Block2=VGG_Block(64,128,1)
         self.VGG_Block3=VGG_Block(128,256,2)
@@ -77,7 +76,7 @@ class VGG_A(nn.Module):
         x=x.reshape(b,-1)
         x=self.FC(x)
         return x
-    
+#VGG A,B,C,D,E가 유사한 형태를 가지고 있기 때문에 앞 부분을 상속하고 다른 부분만 바꿔줄 수 있음.    
 class VGG_B(VGG_A):
     def __init__(self, num_classes):
         super().__init__(num_classes)
