@@ -38,6 +38,7 @@ class VGG_Block(nn.Module):
     
     def forward(self,x):
         x=self.first_conv(x)
+        #middle_convs에서 생성된 conv들에 태운다.
         for module in self.middle_convs:
             x=module(x)
         x=self.mp(x)
