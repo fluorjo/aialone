@@ -5,6 +5,7 @@ class ResNet_front(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv=nn.Sequential(
+            #
             nn.Conv2d(3,64,7,2,3),
             nn.BatchNorm2d(64),
             nn.ReLU()

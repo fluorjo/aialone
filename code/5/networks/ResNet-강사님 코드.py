@@ -66,7 +66,7 @@ class ResNet_Block(nn.Module):
 
         return x 
     
-class ResNet_middel(nn.Module):
+class ResNet_middle(nn.Module):
     def __init__(self): 
         super().__init__()
         # 입력 숫자, 출력 숫자, block 갯수 
@@ -92,7 +92,7 @@ class ResNet(nn.Module):
     def __init__(self): 
         super().__init__() 
         self.front = ResNet_front()
-        self.middle = ResNet_middel()
+        self.middle = ResNet_middle()
         self.back = ResNet_back()
     
     def forward(self, x):
