@@ -65,7 +65,7 @@ def getTargetModel(args):
     elif args.model_type == 'resnet': 
         if args.res_config == '18' : 
             from networks.ResNet import ResNet
-            model = ResNet().to(args.device) 
+            model = ResNet(args).to(args.device) 
         # elif args.res_config == 'b' : 
         #     from networks.VGG import VGG_B
         #     model = VGG_B(args.num_classes).to(args.device) 

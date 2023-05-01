@@ -10,7 +10,6 @@ import os
 sys.path.append(os.getcwd())
 
 def getTransform(args):
-    em
         return transform
 
 def getDataLoader(args):
