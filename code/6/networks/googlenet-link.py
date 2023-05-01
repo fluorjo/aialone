@@ -11,337 +11,229 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import os
-import time
+from collections import namedtuple
+from typing import Optional, Tuple, Any
 
 import torch
+from torch import Tensor
 from torch import nn
-from torch import optim
-from torch.cuda import amp
-from torch.optim import lr_scheduler
-from torch.optim.swa_utils import AveragedModel
-from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
-
-import config
-from dataset import CUDAPrefetcher, ImageDataset
-from utils import accuracy, load_state_dict, make_directory, save_checkpoint, Summary, AverageMeter, ProgressMeter
-import model
-
-model_names = sorted(
-    name for name in model.__dict__ if name.islower() and not name.startswith("__") and callable(model.__dict__[name]))
-
-
-def main():
-    # Initialize the number of training epochs
-    start_epoch = 0
-
-    # Initialize training network evaluation indicators
-    best_acc1 = 0.0
-
-    train_prefetcher, valid_prefetcher = load_dataset()
-    print(f"Load `{config.model_arch_name}` datasets successfully.")
-
-    googlenet_model, ema_googlenet_model = build_model()
-    print(f"Build `{config.model_arch_name}` model successfully.")
-
-    pixel_criterion = define_loss()
-    print("Define all loss functions successfully.")
-
-    optimizer = define_optimizer(googlenet_model)
-    print("Define all optimizer functions successfully.")
-
-    scheduler = define_scheduler(optimizer)
-    print("Define all optimizer scheduler functions successfully.")
-
-    print("Check whether to load pretrained model weights...")
-    if config.pretrained_model_weights_path:
-        googlenet_model, ema_googlenet_model, start_epoch, best_acc1, optimizer, scheduler = load_state_dict(
-            googlenet_model,
-            config.pretrained_model_weights_path,
-            ema_googlenet_model,
-            start_epoch,
-            best_acc1,
-            optimizer,
-            scheduler)
-        print(f"Loaded `{config.pretrained_model_weights_path}` pretrained model weights successfully.")
-    else:
-        print("Pretrained model weights not found.")
-
-    print("Check whether the pretrained model is restored...")
-    if config.resume:
-        googlenet_model, ema_googlenet_model, start_epoch, best_acc1, optimizer, scheduler = load_state_dict(
-            googlenet_model,
-            config.pretrained_model_weights_path,
-            ema_googlenet_model,
-            start_epoch,
-            best_acc1,
-            optimizer,
-            scheduler,
-            "resume")
-        print("Loaded pretrained generator model weights.")
-    else:
-        print("Resume training model not found. Start training from scratch.")
-
-    # Create a experiment results
-    samples_dir = os.path.join("samples", config.exp_name)
-    results_dir = os.path.join("results", config.exp_name)
-    make_directory(samples_dir)
-    make_directory(results_dir)
-
-    # Create training process log file
-    writer = SummaryWriter(os.path.join("samples", "logs", config.exp_name))
-
-    # Initialize the gradient scaler
-    scaler = amp.GradScaler()
-
-    for epoch in range(start_epoch, config.epochs):
-        train(googlenet_model, ema_googlenet_model, train_prefetcher, pixel_criterion, optimizer, epoch, scaler, writer)
-        acc1 = validate(ema_googlenet_model, valid_prefetcher, epoch, writer, "Valid")
-        print("\n")
-
-        # Update LR
-        scheduler.step()
-
-        # Automatically save the model with the highest index
-        is_best = acc1 > best_acc1
-        is_last = (epoch + 1) == config.epochs
-        best_acc1 = max(acc1, best_acc1)
-        save_checkpoint({"epoch": epoch + 1,
-                         "best_acc1": best_acc1,
-                         "state_dict": googlenet_model.state_dict(),
-                         "ema_state_dict": ema_googlenet_model.state_dict(),
-                         "optimizer": optimizer.state_dict(),
-                         "scheduler": scheduler.state_dict()},
-                        f"epoch_{epoch + 1}.pth.tar",
-                        samples_dir,
-                        results_dir,
-                        is_best,
-                        is_last)
-
-
-def load_dataset() -> [CUDAPrefetcher, CUDAPrefetcher]:
-    # Load train, test and valid datasets
-    train_dataset = ImageDataset(config.train_image_dir, config.image_size, "Train")
-    valid_dataset = ImageDataset(config.valid_image_dir, config.image_size, "Valid")
-
-    # Generator all dataloader
-    train_dataloader = DataLoader(train_dataset,
-                                  batch_size=config.batch_size,
-                                  shuffle=True,
-                                  num_workers=config.num_workers,
-                                  pin_memory=True,
-                                  drop_last=True,
-                                  persistent_workers=True)
-    valid_dataloader = DataLoader(valid_dataset,
-                                  batch_size=config.batch_size,
-                                  shuffle=False,
-                                  num_workers=config.num_workers,
-                                  pin_memory=True,
-                                  drop_last=False,
-                                  persistent_workers=True)
-
-    # Place all data on the preprocessing data loader
-    train_prefetcher = CUDAPrefetcher(train_dataloader, config.device)
-    valid_prefetcher = CUDAPrefetcher(valid_dataloader, config.device)
-
-    return train_prefetcher, valid_prefetcher
-
-
-def build_model() -> [nn.Module, nn.Module]:
-    googlenet_model = model.__dict__[config.model_arch_name](num_classes=config.model_num_classes,
-                                                             aux_logits=False,
-                                                             transform_input=True)
-    googlenet_model = googlenet_model.to(device=config.device, memory_format=torch.channels_last)
-
-    ema_avg = lambda averaged_model_parameter, model_parameter, num_averaged: (1 - config.model_ema_decay) * averaged_model_parameter + config.model_ema_decay * model_parameter
-    ema_googlenet_model = AveragedModel(googlenet_model, avg_fn=ema_avg)
-
-    return googlenet_model, ema_googlenet_model
-
-
-def define_loss() -> nn.CrossEntropyLoss:
-    criterion = nn.CrossEntropyLoss(label_smoothing=config.loss_label_smoothing)
-    criterion = criterion.to(device=config.device, memory_format=torch.channels_last)
-
-    return criterion
-
-
-def define_optimizer(model) -> optim.SGD:
-    optimizer = optim.SGD(model.parameters(),
-                          lr=config.model_lr,
-                          momentum=config.model_momentum,
-                          weight_decay=config.model_weight_decay)
-
-    return optimizer
-
-
-def define_scheduler(optimizer: optim.SGD) -> lr_scheduler.CosineAnnealingWarmRestarts:
-    scheduler = lr_scheduler.CosineAnnealingWarmRestarts(optimizer,
-                                                         config.lr_scheduler_T_0,
-                                                         config.lr_scheduler_T_mult,
-                                                         config.lr_scheduler_eta_min)
-
-    return scheduler
-
-
-def train(
-        model: nn.Module,
-        ema_model: nn.Module,
-        train_prefetcher: CUDAPrefetcher,
-        criterion: nn.CrossEntropyLoss,
-        optimizer: optim.Adam,
-        epoch: int,
-        scaler: amp.GradScaler,
-        writer: SummaryWriter
-) -> None:
-    # Calculate how many batches of data are in each Epoch
-    batches = len(train_prefetcher)
-    # Print information of progress bar during training
-    batch_time = AverageMeter("Time", ":6.3f")
-    data_time = AverageMeter("Data", ":6.3f")
-    losses = AverageMeter("Loss", ":6.6f")
-    acc1 = AverageMeter("Acc@1", ":6.2f")
-    acc5 = AverageMeter("Acc@5", ":6.2f")
-    progress = ProgressMeter(batches,
-                             [batch_time, data_time, losses, acc1, acc5],
-                             prefix=f"Epoch: [{epoch + 1}]")
-
-    # Put the generative network model in training mode
-    model.train()
-
-    # Initialize the number of data batches to print logs on the terminal
-    batch_index = 0
-
-    # Initialize the data loader and load the first batch of data
-    train_prefetcher.reset()
-    batch_data = train_prefetcher.next()
-
-    # Get the initialization training time
-    end = time.time()
-
-    while batch_data is not None:
-        # Calculate the time it takes to load a batch of data
-        data_time.update(time.time() - end)
-
-        # Transfer in-memory data to CUDA devices to speed up training
-        images = batch_data["image"].to(device=config.device, memory_format=torch.channels_last, non_blocking=True)
-        target = batch_data["target"].to(device=config.device, non_blocking=True)
-
-        # Get batch size
-        batch_size = images.size(0)
-
-        # Initialize generator gradients
-        model.zero_grad(set_to_none=True)
-
-        # Mixed precision training
-        with amp.autocast():
-            output = model(images)
-            loss_aux3 = config.loss_aux3_weights * criterion(output[0], target)
-            loss_aux2 = config.loss_aux2_weights * criterion(output[1], target)
-            loss_aux1 = config.loss_aux1_weights * criterion(output[2], target)
-            loss = loss_aux3 + loss_aux2 + loss_aux1
-
-        # Backpropagation
-        scaler.scale(loss).backward()
-        # update generator weights
-        scaler.step(optimizer)
-        scaler.update()
-
-        # Update EMA
-        ema_model.update_parameters(model)
-
-        # measure accuracy and record loss
-        top1, top5 = accuracy(output[0], target, topk=(1, 5))
-        losses.update(loss.item(), batch_size)
-        acc1.update(top1[0].item(), batch_size)
-        acc5.update(top5[0].item(), batch_size)
-
-        # Calculate the time it takes to fully train a batch of data
-        batch_time.update(time.time() - end)
-        end = time.time()
-
-        # Write the data during training to the training log file
-        if batch_index % config.train_print_frequency == 0:
-            # Record loss during training and output to file
-            writer.add_scalar("Train/Loss", loss.item(), batch_index + epoch * batches + 1)
-            progress.display(batch_index + 1)
-
-        # Preload the next batch of data
-        batch_data = train_prefetcher.next()
-
-        # Add 1 to the number of data batches to ensure that the terminal prints data normally
-        batch_index += 1
-
-
-def validate(
-        ema_model: nn.Module,
-        data_prefetcher: CUDAPrefetcher,
-        epoch: int,
-        writer: SummaryWriter,
-        mode: str
-) -> float:
-    # Calculate how many batches of data are in each Epoch
-    batches = len(data_prefetcher)
-    batch_time = AverageMeter("Time", ":6.3f", Summary.NONE)
-    acc1 = AverageMeter("Acc@1", ":6.2f", Summary.AVERAGE)
-    acc5 = AverageMeter("Acc@5", ":6.2f", Summary.AVERAGE)
-    progress = ProgressMeter(batches, [batch_time, acc1, acc5], prefix=f"{mode}: ")
-
-    # Put the exponential moving average model in the verification mode
-    ema_model.eval()
-
-    # Initialize the number of data batches to print logs on the terminal
-    batch_index = 0
-
-    # Initialize the data loader and load the first batch of data
-    data_prefetcher.reset()
-    batch_data = data_prefetcher.next()
-
-    # Get the initialization test time
-    end = time.time()
-
-    with torch.no_grad():
-        while batch_data is not None:
-            # Transfer in-memory data to CUDA devices to speed up training
-            images = batch_data["image"].to(device=config.device, memory_format=torch.channels_last, non_blocking=True)
-            target = batch_data["target"].to(device=config.device, non_blocking=True)
-
-            # Get batch size
-            batch_size = images.size(0)
-
-            # Inference
-            output = ema_model(images)
-
-            # measure accuracy and record loss
-            top1, top5 = accuracy(output, target, topk=(1, 5))
-            acc1.update(top1[0].item(), batch_size)
-            acc5.update(top5[0].item(), batch_size)
-
-            # Calculate the time it takes to fully train a batch of data
-            batch_time.update(time.time() - end)
-            end = time.time()
-
-            # Write the data during training to the training log file
-            if batch_index % config.valid_print_frequency == 0:
-                progress.display(batch_index + 1)
-
-            # Preload the next batch of data
-            batch_data = data_prefetcher.next()
-
-            # Add 1 to the number of data batches to ensure that the terminal prints data normally
-            batch_index += 1
-
-    # print metrics
-    progress.display_summary()
-
-    if mode == "Valid" or mode == "Test":
-        writer.add_scalar(f"{mode}/Acc@1", acc1.avg, epoch + 1)
-    else:
-        raise ValueError("Unsupported mode, please use `Valid` or `Test`.")
-
-    return acc1.avg
-
-
-if __name__ == "__main__":
-    main()
+
+__all__ = [
+    "GoogLeNetOutputs",
+    "GoogLeNet",
+    "BasicConv2d", "Inception", "InceptionAux",
+    "googlenet",
+]
+
+# According to the writing of the official library of Torchvision
+GoogLeNetOutputs = namedtuple("GoogLeNetOutputs", ["logits", "aux_logits2", "aux_logits1"])
+GoogLeNetOutputs.__annotations__ = {"logits": Tensor, "aux_logits2": Optional[Tensor], "aux_logits1": Optional[Tensor]}
+
+
+class GoogLeNet(nn.Module):
+    __constants__ = ["aux_logits", "transform_input"]
+
+    def __init__(
+            self,
+            num_classes: int = 1000,
+            aux_logits: bool = True,
+            transform_input: bool = False,
+            dropout: float = 0.2,
+            dropout_aux: float = 0.7,
+    ) -> None:
+        super(GoogLeNet, self).__init__()
+        self.aux_logits = aux_logits
+        self.transform_input = transform_input
+
+        self.conv1 = BasicConv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3))
+        self.maxpool1 = nn.MaxPool2d((3, 3), (2, 2), ceil_mode=True)
+        self.conv2 = BasicConv2d(64, 64, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0))
+        self.conv3 = BasicConv2d(64, 192, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.maxpool2 = nn.MaxPool2d((3, 3), (2, 2), ceil_mode=True)
+
+        self.inception3a = Inception(192, 64, 96, 128, 16, 32, 32)
+        self.inception3b = Inception(256, 128, 128, 192, 32, 96, 64)
+        self.maxpool3 = nn.MaxPool2d((3, 3), (2, 2), ceil_mode=True)
+
+        self.inception4a = Inception(480, 192, 96, 208, 16, 48, 64)
+        self.inception4b = Inception(512, 160, 112, 224, 24, 64, 64)
+        self.inception4c = Inception(512, 128, 128, 256, 24, 64, 64)
+        self.inception4d = Inception(512, 112, 144, 288, 32, 64, 64)
+        self.inception4e = Inception(528, 256, 160, 320, 32, 128, 128)
+        self.maxpool4 = nn.MaxPool2d((2, 2), (2, 2), ceil_mode=True)
+
+        self.inception5a = Inception(832, 256, 160, 320, 32, 128, 128)
+        self.inception5b = Inception(832, 384, 192, 384, 48, 128, 128)
+
+        if aux_logits:
+            self.aux1 = InceptionAux(512, num_classes, dropout_aux)
+            self.aux2 = InceptionAux(528, num_classes, dropout_aux)
+        else:
+            self.aux1 = None
+            self.aux2 = None
+
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.dropout = nn.Dropout(dropout, True)
+        self.fc = nn.Linear(1024, num_classes)
+
+        # Initialize neural network weights
+        self._initialize_weights()
+
+    @torch.jit.unused
+    def eager_outputs(self, x: Tensor, aux2: Tensor, aux1: Optional[Tensor]) -> GoogLeNetOutputs | Tensor:
+        if self.training and self.aux_logits:
+            return GoogLeNetOutputs(x, aux2, aux1)
+        else:
+            return x
+
+    def forward(self, x: Tensor) -> Tuple[Tensor, Optional[Tensor], Optional[Tensor]]:
+        out = self._forward_impl(x)
+
+        return out
+
+    def _transform_input(self, x: Tensor) -> Tensor:
+        if self.transform_input:
+            x_ch0 = torch.unsqueeze(x[:, 0], 1) * (0.229 / 0.5) + (0.485 - 0.5) / 0.5
+            x_ch1 = torch.unsqueeze(x[:, 1], 1) * (0.224 / 0.5) + (0.456 - 0.5) / 0.5
+            x_ch2 = torch.unsqueeze(x[:, 2], 1) * (0.225 / 0.5) + (0.406 - 0.5) / 0.5
+            x = torch.cat((x_ch0, x_ch1, x_ch2), 1)
+        return x
+
+    # Support torch.script function
+    def _forward_impl(self, x: Tensor) -> GoogLeNetOutputs:
+        x = self._transform_input(x)
+
+        out = self.conv1(x)
+        out = self.maxpool1(out)
+        out = self.conv2(out)
+        out = self.conv3(out)
+        out = self.maxpool2(out)
+
+        out = self.inception3a(out)
+        out = self.inception3b(out)
+        out = self.maxpool3(out)
+        out = self.inception4a(out)
+        aux1: Optional[Tensor] = None
+        if self.aux1 is not None:
+            if self.training:
+                aux1 = self.aux1(out)
+
+        out = self.inception4b(out)
+        out = self.inception4c(out)
+        out = self.inception4d(out)
+        aux2: Optional[Tensor] = None
+        if self.aux2 is not None:
+            if self.training:
+                aux2 = self.aux2(out)
+
+        out = self.inception4e(out)
+        out = self.maxpool4(out)
+        out = self.inception5a(out)
+        out = self.inception5b(out)
+
+        out = self.avgpool(out)
+        out = torch.flatten(out, 1)
+        out = self.dropout(out)
+        aux3 = self.fc(out)
+
+        if torch.jit.is_scripting():
+            return GoogLeNetOutputs(aux3, aux2, aux1)
+        else:
+            return self.eager_outputs(aux3, aux2, aux1)
+
+    def _initialize_weights(self) -> None:
+        for module in self.modules():
+            if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
+                torch.nn.init.trunc_normal_(module.weight, mean=0.0, std=0.01, a=-2, b=2)
+            elif isinstance(module, nn.BatchNorm2d):
+                nn.init.constant_(module.weight, 1)
+                nn.init.constant_(module.bias, 0)
+
+
+class BasicConv2d(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int, **kwargs: Any) -> None:
+        super(BasicConv2d, self).__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, bias=False, **kwargs)
+        self.bn = nn.BatchNorm2d(out_channels, eps=0.001)
+        self.relu = nn.ReLU(True)
+
+    def forward(self, x: Tensor) -> Tensor:
+        out = self.conv(x)
+        out = self.bn(out)
+        out = self.relu(out)
+
+        return out
+
+
+class Inception(nn.Module):
+    def __init__(
+            self,
+            in_channels: int,
+            ch1x1: int,
+            ch3x3red: int,
+            ch3x3: int,
+            ch5x5red: int,
+            ch5x5: int,
+            pool_proj: int,
+    ) -> None:
+        super(Inception, self).__init__()
+        self.branch1 = BasicConv2d(in_channels, ch1x1, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0))
+
+        self.branch2 = nn.Sequential(
+            BasicConv2d(in_channels, ch3x3red, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0)),
+            BasicConv2d(ch3x3red, ch3x3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+        )
+
+        self.branch3 = nn.Sequential(
+            BasicConv2d(in_channels, ch5x5red, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0)),
+            BasicConv2d(ch5x5red, ch5x5, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+        )
+
+        self.branch4 = nn.Sequential(
+            nn.MaxPool2d(kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), ceil_mode=True),
+            BasicConv2d(in_channels, pool_proj, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0)),
+        )
+
+    def forward(self, x: Tensor) -> Tensor:
+        branch1 = self.branch1(x)
+        branch2 = self.branch2(x)
+        branch3 = self.branch3(x)
+        branch4 = self.branch4(x)
+        out = [branch1, branch2, branch3, branch4]
+
+        out = torch.cat(out, 1)
+
+        return out
+
+
+class InceptionAux(nn.Module):
+    def __init__(
+            self,
+            in_channels: int,
+            num_classes: int,
+            dropout: float = 0.7,
+    ) -> None:
+        super().__init__()
+        self.avgpool = nn.AdaptiveAvgPool2d((4, 4))
+        self.conv = BasicConv2d(in_channels, 128, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0))
+        self.relu = nn.ReLU(True)
+        self.fc1 = nn.Linear(2048, 1024)
+        self.fc2 = nn.Linear(1024, num_classes)
+        self.dropout = nn.Dropout(dropout, True)
+
+    def forward(self, x: Tensor) -> Tensor:
+        out = self.avgpool(x)
+        out = self.conv(out)
+        out = torch.flatten(out, 1)
+        out = self.fc1(out)
+        out = self.relu(out)
+        out = self.dropout(out)
+        out = self.fc2(out)
+
+        return out
+
+
+def googlenet(**kwargs: Any) -> GoogLeNet:
+    model = GoogLeNet(**kwargs)
+
+    return model
