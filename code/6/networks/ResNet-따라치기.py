@@ -54,6 +54,18 @@ class ResNet_Block(nn.Module):
         self.relu=nn.ReLU()
     
     def forward(self,x):
+        skip_x=torch.clone(x)
+        if self.downsampling:
+            skip_x=self.skip_conv(skip_x)
+        x=self.first_conv(x)
+        x=self.second_conv(x)
+        x=x+skip_x
+        x=self.relu(x)
         return x
 
+class ResNet_BottleNeck(nn.Module):
+    def __init__(self):
+        super().__init__()
     
+    def forward(self,x):
+        return x
