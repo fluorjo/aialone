@@ -28,11 +28,32 @@ class ResNet_back(nn.Module):
         x=torch.squeeze(x)  
         x=self.fc(x)
         return x
-    
+        
 class ResNet_Block(nn.Module):
-    def __init__(self):
+    def __init__(self,in_channel,out_channel,downsampling=False):
         super().__init__()
-        
-        
+        self.downsampling=downsampling
+        stride=1
+        if self.downsampling:
+            stride=2
+            self.skip_conv=nn.Sequential(
+                nn.Conv2d(in_channel,out_channel,3,stride,1),
+                nn.BatchNorm2d(out_channel),
+                nn.ReLU()
+            )
+        self.first_conv=nn.Sequential(
+                nn.Conv2d(in_channel,out_channel,3,stride,1),
+                nn.BatchNorm2d(out_channel),
+                nn.ReLU()
+            )
+        self.second_conv=nn.Sequential(
+                nn.Conv2d(out_channel,out_channel,3,1,1),
+                nn.BatchNorm2d(out_channel),
+                nn.ReLU()
+            )
+        self.relu=nn.ReLU()
+    
+    def forward(self,x):
+        return x
 
     
