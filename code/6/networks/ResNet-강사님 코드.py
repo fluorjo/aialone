@@ -38,6 +38,7 @@ class ResNet_back(nn.Module):
         x = self.fc(x) 
         return x 
     
+    
 class ResNet_Block(nn.Module):
     def __init__(self, in_channel, out_channel, downsampling=False): 
         super().__init__()
