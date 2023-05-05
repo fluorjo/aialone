@@ -4,7 +4,7 @@ class ResNet_front(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv=nn.Sequential(
-            #입력3 / 출력64 / kernel size=7 / stride=2 / padding=3(이미지 크기 유지 위해) 
+            #입력3(rgb) / 출력64 / kernel size=7 / stride=2 / padding=3(이미지 크기 유지 위해) 
             nn.Conv2d(3,64,7,2,3),
             nn.BatchNorm2d(64),
             nn.ReLU(),
