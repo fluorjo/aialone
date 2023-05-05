@@ -37,6 +37,8 @@ class ResNet_back(nn.Module):
     
     def forward(self,x):
         x=self.pool(x)
+        #1*1*512 상태는 벡터가 아니다. shape를 맞춰서 마지막 1로 들어가게 해야 함. 
+        #그래서 1인 차원들을 강제로 지워줌. 
         x=torch.squeeze(x)  
         x=self.fc(x)
         return x
