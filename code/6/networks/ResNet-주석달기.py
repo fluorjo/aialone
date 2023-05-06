@@ -1,11 +1,14 @@
 import torch
 import torch.nn as nn
 
+#레이어 숫자에 따른 블록 개수를 리스트로 만들어놓기.
 NUM_BLOCKS_18 = [2, 2, 2, 2]
 NUM_BLOCKS_34 = [3, 4, 6, 3]
 NUM_BLOCKS_50 = [3, 4, 6, 3]
 NUM_BLOCKS_101 = [3, 4, 23, 3]
 NUM_BLOCKS_152 = [3, 8, 36, 3]
+
+#블록이 3,3일 때와 1,3,1일 때의 채널 수를 리스트로 만들어놓기.
 NUM_CHANNEL_33 = [64, 64, 128, 256, 512]
 NUM_CHANNEL_131 = [64, 256, 512, 1024, 2048]
 
@@ -89,11 +92,15 @@ class ResNet_BottleNeck(nn.Module):
             nn.BatchNorm2d(out_channel),
             nn.ReLU()
         )
+        #1,3,1 구조에서 1x1들은 패딩이 없음.
+        #이 구조에선 앞의 1,3은 마지막 아웃 채널의 4분의 1 만큼의 인풋이 들어감. 
         self.first_conv=nn.Sequential(
-                nn.Conv2d(in_channel,out_channel//4,1,1,0),
-                nn.BatchNorm2d(out_channel//4),
-                nn.ReLU()
-            )
+            nn.Conv2d(in_channel,out_channel//4,1,1,0),
+            nn.BatchNorm2d(out_channel//4),
+            nn.ReLU()
+        )
+        #1,3,1 구조에서 3x3은 패딩이 1. 
+
         self.second_conv=nn.Sequential(
                 nn.Conv2d(out_channel//4,out_channel//4,3,stride,1),
                 nn.BatchNorm2d(out_channel//4),
