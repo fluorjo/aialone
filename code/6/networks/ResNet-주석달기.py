@@ -34,7 +34,8 @@ class ResNet_back(nn.Module):
         super().__init__()
         #AdaptiveAvgPool2d=7x7 입력을 강제적으로 1x1로 바꿔줌.
         self.pool=nn.AdaptiveAvgPool2d(1)
-        #입력 configuration에 따라 average pooling에 입력되는 채널 크기가 달라짐. 
+        #입력 configuration(레이어 수)에 따라 average pooling에 입력되는 채널 크기가 달라짐. 
+        #18, 34(3*3구조)면 512, 나머지면 2048.
         in_feat=512 if config in ['18','34'] else 2048
         self.fc=nn.Linear(in_feat,num_classes)
     
