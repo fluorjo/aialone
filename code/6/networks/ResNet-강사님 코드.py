@@ -80,6 +80,7 @@ class ResNet_Block(nn.Module):
 class ResNet_BottleNeck(nn.Module): 
     def __init__(self, in_channel, out_channel, downsampling=False): 
         super().__init__()
+
         stride = 2 if downsampling else 1 
 
         self.skip_conv = nn.Sequential(
@@ -144,7 +145,7 @@ class ResNet_middle(nn.Module):
         self.layer4 = self.make_layer(num_channel[3], num_channel[4], num_blocks[3], True)
     
     def make_layer(self, in_channel, out_channel, num_block, downsampling=False): 
-        layer = [ self.target_layer(in_channel, out_channel, downsampling) ]
+        layer = [self.target_layer(in_channel, out_channel, downsampling) ]
         for _ in range(num_block - 1):
             layer.append(self.target_layer(out_channel, out_channel))
         return nn.Sequential(*layer) 

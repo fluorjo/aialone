@@ -86,6 +86,8 @@ class ResNet_Block(nn.Module):
 class ResNet_BottleNeck(nn.Module):
     def __init__(self,in_channel,out_channel,downsampling=False):
         super().__init__()
+        #다운샘플링할 경우 stride=2.
+        #3*3에서 크기를 반으로 줄여야 하기 때문.
         stride=2 if downsampling else 1
         self.skip_conv=nn.Sequential(
             nn.Conv2d(in_channel,out_channel,3,stride,1),
@@ -148,7 +150,9 @@ class ResNet_middle(nn.Module):
         self.layer4=self.make_layer(num_channel[3],num_channel[4],num_blocks[3])
     
     def make_layer(self,in_channel,out_channel,num_block,downsampling=False):
+        #첫 번째 레이어에서 다운샘플링.
         layer=[self.target_layer(in_channel,out_channel,downsampling)]
+        #나머지 레이어를 블록 수 -1 만큼 생성. 여기는 다운샘플링 안함.
         for _ in range(num_block-1):
             layer.append(self.target_layer(out_channel,out_channel))
         return nn.Sequential(*layer)
