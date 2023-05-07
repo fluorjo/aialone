@@ -1,0 +1,10 @@
+{
+    "batch_size": 150,
+    "hidden_size": 150,
+    "num_classes": 10,
+    "lr": 0.03,
+    "epochs": 10,
+    "img_size": 224,
+    "model_type": "lenet",
+    "save_folder": "code/4-practice/results"
+}
