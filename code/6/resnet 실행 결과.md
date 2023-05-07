@@ -1,0 +1,214 @@
+18layer의 최고 정확도
+74.03
+50layer의 최고 정확도 
+36.76
+
+- 18 layer 출력
+Files already downloaded and verified
+2.8014395236968994
+accuracy : 0.1076
+new best model acc:10.76
+2.2027292251586914
+accuracy : 0.1955
+new best model acc:19.55
+2.0545923709869385
+accuracy : 0.2508
+new best model acc:25.08
+1.8752681016921997
+accuracy : 0.3535
+new best model acc:35.35
+1.8762356042861938
+accuracy : 0.3778
+new best model acc:37.78
+1.6055563688278198
+accuracy : 0.4394
+new best model acc:43.94
+1.58100163936615
+accuracy : 0.4666
+new best model acc:46.66
+1.3190642595291138
+accuracy : 0.5036
+new best model acc:50.36
+1.1577008962631226
+accuracy : 0.5379
+new best model acc:53.79
+1.1205044984817505
+accuracy : 0.5721
+new best model acc:57.21
+1.1301707029342651
+accuracy : 0.6002
+new best model acc:60.02
+1.197999119758606
+accuracy : 0.6251
+new best model acc:62.51
+1.0042270421981812
+accuracy : 0.6371
+new best model acc:63.71
+0.9140862226486206
+accuracy : 0.643
+new best model acc:64.30
+1.1440761089324951
+accuracy : 0.6549
+new best model acc:65.49
+0.9939231276512146
+accuracy : 0.6537
+0.9111267328262329
+accuracy : 0.6715
+new best model acc:67.15
+1.0565860271453857
+accuracy : 0.6824
+new best model acc:68.24
+0.7240762114524841
+accuracy : 0.6838
+new best model acc:68.38
+0.922393798828125
+accuracy : 0.6885
+new best model acc:68.85
+0.7584776878356934
+accuracy : 0.684
+0.694627583026886
+accuracy : 0.6941
+new best model acc:69.41
+0.8734087944030762
+accuracy : 0.7028
+new best model acc:70.28
+0.7162051796913147
+accuracy : 0.7119
+new best model acc:71.19
+0.7435867786407471
+accuracy : 0.7045
+0.6589154005050659
+accuracy : 0.7043
+0.7384113669395447
+accuracy : 0.7224
+new best model acc:72.24
+0.5807946920394897
+accuracy : 0.7193
+0.777292788028717
+accuracy : 0.7152
+0.7297862768173218
+accuracy : 0.7235
+new best model acc:72.35
+0.7687909007072449
+accuracy : 0.7188
+0.5962982773780823
+accuracy : 0.7225
+0.5136646032333374
+accuracy : 0.7225
+0.5069077014923096
+accuracy : 0.7297
+new best model acc:72.97
+0.5542976260185242
+accuracy : 0.7232
+0.5298053622245789
+accuracy : 0.733
+new best model acc:73.30
+0.451986700296402
+accuracy : 0.723
+0.3763275444507599
+accuracy : 0.7351
+new best model acc:73.51
+0.5756527781486511
+accuracy : 0.7403
+new best model acc:74.03
+0.4734245240688324
+accuracy : 0.7282
+
+- 50layer 출력
+2.3658084869384766
+accuracy : 0.1
+new best model acc:10.00
+2.343731641769409
+accuracy : 0.113
+new best model acc:11.30
+2.213052749633789
+accuracy : 0.1371
+new best model acc:13.71
+1.9769195318222046
+accuracy : 0.2143
+new best model acc:21.43
+1.8993685245513916
+accuracy : 0.2164
+new best model acc:21.64
+1.9719762802124023
+accuracy : 0.2451
+new best model acc:24.51
+2.0004236698150635
+accuracy : 0.2564
+new best model acc:25.64
+1.897009015083313
+accuracy : 0.2736
+new best model acc:27.36
+1.8185139894485474
+accuracy : 0.2848
+new best model acc:28.48
+1.8229862451553345
+accuracy : 0.2829
+1.7453938722610474
+accuracy : 0.2981
+new best model acc:29.81
+1.7725272178649902
+accuracy : 0.3102
+new best model acc:31.02
+1.7170747518539429
+accuracy : 0.2866
+1.7266197204589844
+accuracy : 0.3146
+new best model acc:31.46
+1.8591201305389404
+accuracy : 0.3145
+1.7290600538253784
+accuracy : 0.344
+new best model acc:34.40
+1.8438057899475098
+accuracy : 0.3214
+1.741390347480774
+accuracy : 0.3287
+1.7385715246200562
+accuracy : 0.3348
+1.818691372871399
+accuracy : 0.3403
+1.7832295894622803
+accuracy : 0.3502
+new best model acc:35.02
+1.8199931383132935
+accuracy : 0.3564
+new best model acc:35.64
+1.837477445602417
+accuracy : 0.298
+1.831058144569397
+accuracy : 0.3267
+1.8314871788024902
+accuracy : 0.3265
+1.7562048435211182
+accuracy : 0.3336
+1.734796404838562
+accuracy : 0.339
+1.7142386436462402
+accuracy : 0.3325
+1.7091240882873535
+accuracy : 0.3362
+1.5836892127990723
+accuracy : 0.349
+1.6734565496444702
+accuracy : 0.3519
+1.683471441268921
+accuracy : 0.3462
+1.665857195854187
+accuracy : 0.3574
+new best model acc:35.74
+1.7190263271331787
+accuracy : 0.3179
+1.7771885395050049
+accuracy : 0.3386
+1.60685396194458
+accuracy : 0.3573
+1.6792749166488647
+accuracy : 0.3676
+new best model acc:36.76
+1.6513696908950806
+accuracy : 0.3611
+1.761016845703125
+accuracy : 0.3554
+1.6439239978790283
+accuracy : 0.3252
