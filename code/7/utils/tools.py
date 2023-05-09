@@ -28,8 +28,9 @@ def get_save_folder_path(args):
     if not os.path.exists(args.save_folder):
         os.makedirs(args.save_folder)
         path=os.path.join(args.save_folder,'1')
-        return path
-    current_max_value=max([int(f) for f in os.listdir(args.save_folder) ])
-    new_folder_name=str(current_max_value+1)
-    path=os.path.join(args.save_folder, new_folder_name)
+    else:
+        current_max_value=max([int(f) for f in os.listdir(args.save_folder) ])
+        new_folder_name=str(current_max_value+1)
+        path=os.path.join(args.save_folder, new_folder_name)
+    
     return path
