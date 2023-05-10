@@ -45,7 +45,7 @@ def main():
             loss_value.backward()
             optim.step()
 
-            if idx % 100 == 0 : 
+            if idx % args.save_itr == 0 : 
                 print(loss_value.item())
                 acc=eval(model, test_loader, args)
                 print('accuracy :', acc) 
