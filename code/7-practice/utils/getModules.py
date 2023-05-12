@@ -24,36 +24,6 @@ def getTransform(args):
     return transform
 
 def getDataLoader(args): 
-    transform = getTransform(args)
-
-    if args.data=='cifar':
-        train_dataset = CIFAR10(root='./cifar', train=True, transform=transform, download=True)
-        test_dataset = CIFAR10(root='./cifar', train=False, transform=transform, download=True)
-    # Dog dataset 
-    else : # data == 'dog'
-        # ImageFolder 
-        if args.dataset == 'imagefolder': 
-            from torchvision.datasets import ImageFolder
-            train_dataset = ImageFolder(root='/home/dataset/dog_v1_TT/train', transform=transform)
-            test_dataset = ImageFolder(root='/home/dataset/dog_v1_TT/test', transform=transform)
-            
-        # Custom datset 1 - 트레인 - 테스트가 나뉘어 있는 경우.
-        elif args.dataset == 'custom1': 
-            from utils.dogdataset import DogDataset
-            train_dataset = DogDataset(root='/home/dataset/dog_v1_TT/train', trans=transform)
-            test_dataset = DogDataset(root='/home/dataset/dog_v1_TT/test', trans=transform)
-            pass  
-        # Custom datset 2 - 트레인 - 테스트가 나뉘어 있지 않은 경우.
-        elif args.dataset == 'custom2': 
-            from utils.dogdataset import DogDataset
-            from sklearn.model_selection import train_test_split
-            tmp_dataset=DogDataset(root='/home/dataset/dog_v1', trans=transform)
-            train_dataset, test_dataset=train_test_split(tmp_dataset,train_size=0.8,random_state=1111,shuffle=True,)
-    # dataloader 
-    train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True)
-    test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False)
-
-    return train_loader, test_loader
 
 def getTargetModel(args): 
     if args.model_type == 'mlp': 
