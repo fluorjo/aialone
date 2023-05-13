@@ -26,7 +26,34 @@ def getTransform(args):
 def getDataLoader(args): 
     transform=getTransform(args)
     
+    if args.data=='cifar':
+        train_dataset=CIFAR10(root='./cifar', train=True,transform=transform,download=True)
+        train_dataset=CIFAR10(root='./cifar', train=False,transform=transform,download=True)
 
+    else:
+        if args.dataset=='imagefolder':
+            from torchvision.datasets import ImageFolder
+            train_dataset=ImageFolder(root='/home/dataset/dog_v1_TT/train',transform=transform)
+            test_dataset=ImageFolder(root='/home/dataset/dog_v1_TT/test',transform=transform)
+
+        elif args.dataset=='custom1':
+            from utils.dogdataset import DogDataset
+            train_dataset=DogDataset(root='/home/dataset/dog_v1_TT/train',transform=transform)
+            test_dataset=DogDataset(root='/home/dataset/dog_v1_TT/test',transform=transform)
+            pass
+        
+        elif args.dataset=='custom2':
+            from utils.dogdataset import DogDataset
+            from sklearn.model_selection import train_test_split
+            
+            tmp_dataset=DogDataset(root='/home/dataset/dog_v1',trans=transform)
+            train_dataset,test_dataset=train_test_split(tmp_dataset,train_size=0.8,random_state=1111,shuffle=True)
+            
+    train_loader=DataLoader(dataset=train_dataset,batch_size=args.batch_size,shuffle=True)
+    test_loader=DataLoader(dataset=test_dataset,batch_size=args.batch_size,shuffle=True)
+    
+    return train_loader,test_loader
+            
 def getTargetModel(args): 
     if args.model_type == 'mlp': 
         from networks.MLP import myMLP
