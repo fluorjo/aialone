@@ -1,18 +1,16 @@
 import torch
 import torch.nn as nn
-
 class ResNet_front(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv=nn.Sequential(
-        #입력3 / 출력64 / kernel size=7 / stride=2 / padding=3(이미지 크기 유지 위해) 
+            #입력3(rgb) / 출력64 / kernel size=7 / stride=2 / padding=3(이미지 크기 유지 위해) 
             nn.Conv2d(3,64,7,2,3),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-        ),
+        )
         #maxpool => kernel size=3 / stride=2 / padding=1(이미지 크기 절반으로 만들기 위해) 
         self.pool=nn.MaxPool2d(3,2,1)
-        
     def forward(self,x):
         x=self.pool(x)
         x=self.fc(x)
@@ -26,7 +24,6 @@ class ResNet_back(nn.Module):
         #입력 configuration에 따라 average pooling에 입력되는 채널 크기가 달라짐. 
         in_feat=512 if config in ['18','34'] else 2048
         self.fc=nn.Linear(in_feat,num_classes)
-        
     def forward(self,x):
         x=self.pool(x)
         x=self.fc(x)
@@ -36,8 +33,8 @@ class ResNet_back(nn.Module):
 class ResNet_Block(nn.Module):
     def __init__(self,in_channel,out_channel,downsampling=False):
         super().__init__()
-        #다운샘플=입력 데이터의 크기와 네트워크를 통과한 출력 데이터 크기가 다를 경우 맞춰주는 것. 이 경우에는 stride를 2로 해서 적용함(기본 stride값은 1)
         self.downsampling=downsampling
+        #다운샘플=입력 데이터의 크기와 네트워크를 통과한 출력 데이터 크기가 다를 경우 맞춰주는 것. 이 경우에는 stride를 2로 해서 적용함(기본 stride값은 1)
         stride=1
         if self.downsampling:
             stride=2
@@ -45,18 +42,18 @@ class ResNet_Block(nn.Module):
                 nn.Conv2d(in_channel,out_channel,3,stride,1),
                 nn.BatchNorm2d(out_channel),
                 nn.ReLU(),
-            ),
-        #다운샘플을 안 할 경우(엄밀히 말하면 안 할 경우라기 보단 안 하는 부분이라고 하는 게 더 정확한 표현이려나.)
+            )
+        #다운샘플을 안 할 경우
         self.first_conv=nn.Sequential(
             nn.Conv2d(in_channel,out_channel,3,stride,1),
             nn.BatchNorm2d(out_channel),
             nn.ReLU(),
-        ),
+        )
         self.second_conv=nn.Sequential(
             nn.Conv2d(out_channel,out_channel,3,1,1),
             nn.BatchNorm2d(out_channel),
             nn.ReLU(),
-        ),
+        )
         self.relu=nn.ReLU()
         
     def forward(self,x):
@@ -64,10 +61,8 @@ class ResNet_Block(nn.Module):
         skip_x=torch.clone(x)
         if self.downsampling:
             skip_x=self.skip_conv(skip_x)
-            
         x=self.first_conv(x)
         x=self.second_conv(x)
-        
         #x와 identify x(?)를 합친다.
         x=x+skip_x
         x=self.relu(x)
@@ -86,12 +81,10 @@ class ResNet_middle(nn.Module):
         
     def make_layer(self,in_channel,out_channel,num_block,downsampling=False):
         layer=[ResNet_Block(in_channel,out_channel,downsampling)]
-        
         for _ in range(num_block-1):
             layer.append(ResNet_Block(out_channel,out_channel))
-            
-        #언패킹.리스트는 별 하나, 딕셔너리는 별 두 개.키와 벨류가 있으니까. 
         return nn.Sequential(*layer)
+        #언패킹.리스트는 별 하나, 딕셔너리는 별 두 개.키와 벨류가 있으니까. 
     
     def forward(self,x):
         x=self.layer1(x)

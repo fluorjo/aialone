@@ -10,6 +10,7 @@ from .tools import CIFAR_MEAN, CIFAR_STD
 def getTransform(args): 
     if args.fine_tuning : 
         from torchvision.transforms._presets import ImageClassification
+        #resize->crop 해주기. img_size로. 
         transform = ImageClassification(crop_size=args.img_size, 
                                         resize_size=args.img_size)
     else : 
@@ -25,28 +26,31 @@ def getTransform(args):
 
 def getDataLoader(args): 
     transform=getTransform(args)
-    
+    #cifar 데이터 쓸 경우
     if args.data=='cifar':
         train_dataset=CIFAR10(root='./cifar', train=True,transform=transform,download=True)
         train_dataset=CIFAR10(root='./cifar', train=False,transform=transform,download=True)
-
+    #dog dataset 쓸 경우 - image 폴더 혹은 커스텀셋
     else:
+        #이미지 폴더
         if args.dataset=='imagefolder':
             from torchvision.datasets import ImageFolder
+            #데이터셋의 위치 지정. 
             train_dataset=ImageFolder(root='/home/dataset/dog_v1_TT/train',transform=transform)
             test_dataset=ImageFolder(root='/home/dataset/dog_v1_TT/test',transform=transform)
-
+        #커스텀1
         elif args.dataset=='custom1':
             from utils.dogdataset import DogDataset
             train_dataset=DogDataset(root='/home/dataset/dog_v1_TT/train',transform=transform)
             test_dataset=DogDataset(root='/home/dataset/dog_v1_TT/test',transform=transform)
             pass
-        
+        #커스텀2- train/test 나뉘어있지 않은 경우. 
         elif args.dataset=='custom2':
             from utils.dogdataset import DogDataset
             from sklearn.model_selection import train_test_split
-            
+            #tmp_dataset은 원본 데이터 그대로 가져온 것. 
             tmp_dataset=DogDataset(root='/home/dataset/dog_v1',trans=transform)
+            #train - test 나눠주기. train size는 0.8.
             train_dataset,test_dataset=train_test_split(tmp_dataset,train_size=0.8,random_state=1111,shuffle=True)
             
     train_loader=DataLoader(dataset=train_dataset,batch_size=args.batch_size,shuffle=True)
@@ -87,24 +91,20 @@ def getTargetModel(args):
             from networks.VGG import VGG_E
             model = VGG_E(args.num_classes).to(args.device) 
     elif args.model_type == 'resnet': 
-        #파인튜닝 한다면?
+        #파인튜닝 할 경우
         if args.fine_tuning:
             import torch.nn as nn
+            #resnet18 모델과 웨이트 가져옴. 인수로 넣어줘야 함. 
             from torchvision.models import resnet18
             from torchvision.models import ResNet18_Weights
-            #모델과 웨이트 가져옴. 
             weight=ResNet18_Weights
             model=resnet18(weight,progress=True)
-            #모델의 최종 출력단을 변경함.
-
-            # for idx, m in model.layer4.named_modules():
-            #     if isinstance(m, nn.Conv2d):
-            #         print(m,weight)
-                
+            #모델의 최종 출력단을 변경함. 원래 1000개의 클래스 분류하게 돼있는 걸 5개 분류하도록 바꿈.
+            
             model.fc=nn.Linear(512,5)
             model=model.to(args.device)
             pass
-        #안 하면?
+        #안 할 경우
         else:
             from networks.ResNet import ResNet
             model = ResNet(args).to(args.device) 

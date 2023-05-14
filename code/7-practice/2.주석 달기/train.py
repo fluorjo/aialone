@@ -26,8 +26,19 @@ def main():
         json.dump(json_args,f,indent=4)
     train_loader, test_loader=getDataLoader(args)
     # 모델, loss, optimizer 
+    # 모델은 기본 pytorch구현한 resnet18에다 뒤쪽에 MLP 변환 
     model=getTargetModel(args)
     loss = nn.CrossEntropyLoss() 
+    
+    # resnet의 기존 파라미터는 lr 0.00001, 뒤쪽에 붙은 MLP는 좀 큰 lr 
+    param_groups = [
+        {'params':module, 'lr':args.lr * 0.01}
+            for name, module in model.named_parameters() 
+            if 'fc' not in name 
+    ]
+    #모델 마지막 fc의 lr을 0으로 지정.
+    param_groups.append({'params':model.fc.parameters(), 'lr':args.lr})    
+    
     optim = Adam(model.parameters(), lr=args.lr)
     # 학습 loop 
     #앞으로 정확도가 높아질수록 갱신이 될테니 우선 0으로 둔다. 
@@ -41,8 +52,9 @@ def main():
             optim.zero_grad() 
             loss_value.backward()
             optim.step()
-
-            if idx % 100 == 0 : 
+            
+            #dataset 추가하면서 수정. save_itr라는 arg 추가해서 출력 횟수 조절. 
+            if idx % args.save_itr == 0 : 
                 print(loss_value.item())
                 acc=eval(model, test_loader, args)
                 print('accuracy :', acc) 
