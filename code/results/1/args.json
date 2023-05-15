@@ -1,0 +1,15 @@
+{
+    "batch_size": 100,
+    "hidden_size": 500,
+    "num_classes": 5,
+    "lr": 0.0001,
+    "epochs": 3,
+    "img_size": 32,
+    "data": "dog",
+    "dataset": "custom2",
+    "save_folder": "results",
+    "model_type": "resnet",
+    "res_config": "18",
+    "fine_tuning": true,
+    "save_itr": 3
+}
