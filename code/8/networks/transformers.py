@@ -30,6 +30,7 @@ class MultiHeadAttention(nn.Module):
 
         # attention score 계산
         # [batch_size, seq_len, num_heads, head_dim] * [batch_size, seq_len, num_heads, head_dim] -> [batch_size, seq_len, num_heads, num_heads]
+        #dot product= 내적 시킴. matrix multification.
         score = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.head_dim) 
 
         # attention score를 softmax를 통해 확률값으로 변환
@@ -89,7 +90,10 @@ class PositionalEncoding(nn.Module):
         # 학습 변수가 아닌 상수로 저장하며
         # 모델이 학습되는 동안 학습되지 않도록 함
         # 그러면서도 모델의 일부로 포함되어 GPU 연산등이 가능함 
-        self.register_buffer('positional_encoding', positional_encoding.unsqueeze(0)) # 마지막 unsqueeze는 batch 차원 추가
+        self.register_buffer('positional_encoding', positional_encoding.unsqueeze(0)) 
+        #이건 상수
+        # 마지막 unsqueeze는 batch 차원 추가
+        self.position_encoding=positional_encoding#위랑 똑같은데 이건 변수. 그래서 값이 바뀌기 때문에 이렇게 하면 안 좋음. 
 
     def forward(self, x): 
         x = x + self.positional_encoding[:, :x.size(1)] 
